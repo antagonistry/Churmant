@@ -21,6 +21,7 @@
 #define end }
 #define do {
 #define else } else {
+#define elif } else if (
 #define match(x) switch((int_fast64_t) x) {
 #define case(x) case(x): {
 #define close } break;
