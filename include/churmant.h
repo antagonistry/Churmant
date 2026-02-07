@@ -126,10 +126,26 @@ int main(int argc, string argv[]) do \
   free(churmant_dynamics); \
   return(success); \
 end
-final int CHURMANT_MAXFILES = 256;
-final int CHURMANT_MAXDYNAMICS = 512;
+#define CHURMANT_MAXFILES 256
+#define CHURMANT_MAXDYNAMICS 512
+#define CHURMANT_UNKNOWN 0
+#define CHURMANT_WINDOWS 1
+#define CHURMANT_LINUX 2
+#define CHURMANT_DARWIN 3
+#define CHURMANT_BSD 4
 ptr *churmant_dynamics;
 file *churmant_files;
+#if _WIN32
+  int churmant_os = CHURMANT_WINDOWS;
+#elif __linux
+  int churmant_os = CHURMANT_LINUX;
+#elif __APPLE__
+  int churmant_os = CHURMANT_DARWIN;
+#elif __FreeBSD__
+  int churmant_os = CHURMANT_BSD;
+#else
+  int churmant_os = CHURMANT_UNKNOWN;
+#endif
 int churmant_findex;
 int churmant_dindex;
 jmp_buf churmant_buffer;

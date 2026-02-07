@@ -6,3 +6,5 @@
 *.so
 *.bin
 *.dll
+*.zip
+*.tar.gz
