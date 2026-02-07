@@ -3,14 +3,18 @@
 It also is very easy to maintain and read the header file, if you want to *contribute*. You can also call **Churmant** a *programming language*,
 if you want, or you can just said *"C's Churmant Syntax"*. **NOTICE: Churmant can produce Lua-like code only, the code is still unsafe.** And here are
 the *pros* and *cons* of the *language*:
+
 ### Pros
 - Lua-like Syntax
 - Auto Garbage-Collection
+
 ### Cons
 - Unsafe Code
 - No Borrow Checking
 - No Smart Pointer
+
 If you're wondering how the *syntax* would look like in an example here it is:
+
 ```c
 #include "churmant.h"
 
@@ -33,4 +37,5 @@ churmant_main
   end
 churmant_mend
 ```
+
 The *language* is currently in the *development* state, you can help us, if you want.
