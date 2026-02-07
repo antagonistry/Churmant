@@ -1,5 +1,10 @@
 #include "churmant.h"
 
+func recover() do
+  println("[insuffucient memory]");
+  exit(failure);
+end
+
 churmant_main
   final integer CMD_SIZE = sizeof(character) * 256;
   struct timeval start_time, end_time;
@@ -26,4 +31,4 @@ churmant_main
   elapsed = (end_time.tv_sec - start_time.tv_sec) * 1000;
   elapsed += (end_time.tv_usec - start_time.tv_usec) / 1000;
   printf("%-16s%lf\n", "[elapsed]", elapsed);
-churmant_mend
+churmant_mend()

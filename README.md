@@ -1,17 +1,15 @@
 # CHurMant
 **Churmant** *(cure-ment)*, is a *compiler* for **C language**, it's used for producing *Lua-like* code, but run in the performance of the **C language**.
 It also is very easy to maintain and read the header file, if you want to *contribute*. You can also call **Churmant** a *programming language*,
-if you want, or you can just said *"C's Churmant Syntax"*. **NOTICE: Churmant can produce Lua-like code only, the code is still unsafe.** And here are
-the *pros* and *cons* of the *language*:
+if you want, or you can just said *"C's Churmant Syntax"*. And here are the *pros* and *cons* of the *language*:
 
 ### Pros
 - Lua-like Syntax
+- Stack Protection
 - Auto Garbage-Collection
 
 ### Cons
-- Unsafe Code
-- No Borrow Checking
-- No Smart Pointer
+- Is Not Object Oriented Language
 
 If you're wondering how the *syntax* would look like in an example here it is:
 
@@ -38,4 +36,6 @@ churmant_main
 churmant_mend
 ```
 
-The *language* is currently in the *development* state, you can help us, if you want.
+The entire code that is written in **Churmant** is always *stack protected*, because whenever **SEGFAULT** happens, it quickly jumps to the recovery
+part of the *code*, at the `churmant_mend(x)`; 'x' is a *function* that can be called without needing any *arguments*. **NOTICE: Any part of the code that's
+not written in Churmant syntax might just straight up SEGFAULT.** The *language* is currently in the *development* state, you can help us, if you want.

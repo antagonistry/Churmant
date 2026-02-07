@@ -7,12 +7,17 @@
 #include <sys/time.h>
 #include <math.h>
 #include <unistd.h>
+#include <setjmp.h>
 #ifndef __CHURMANT_H
 #define __CHURMANT_H
-#define int int_fast32_t
-#define long int_fast64_t
+#ifndef churmant_ctypes
+  #define int int_fast32_t
+  #define long int_fast64_t
+  #define float double
+  #define short int_fast16_t
+#endif
+#define tiny int_fast8_t
 #define string char*
-#define float double
 #define bool _Bool
 #define byte _Bool
 #define char char
@@ -33,8 +38,7 @@
 #define end };
 #define do {
 #define else } else {
-#define elif } else if (
-#define match(x) switch((intptr_t) x) {
+#define match(x) switch(x) {
 #define case(x) case(x): {
 #define close } break;
 #define default default: {
@@ -44,6 +48,8 @@
 #define for(x, y, z) for(long i = x; y; i += z)
 #define const(x) #x
 #define final const
+#define return(x) return((func) x)
+#define normal if not setjmp(churmant_buffer) then
 #define quit(x) \
   for(0, i < churmant_findex, 1) do \
     fclose(churmant_files[i]); \
@@ -92,17 +98,24 @@ x[strlen(x) - 1] = '\0'
 #define assert(x) \
 match(x) \
   case(false) \
-    printf("\n\n[assertion failed at line %llu in file '%s']\n", __LINE__, __FILE__); \
+    printf("assertion failed at line %llu in file '%s'\n", __LINE__, __FILE__); \
     exit(failure); \
   close \
 end
+#define pointer(x, y, z) \
+x y = null; \
+allocate(y, z);
 #define churmant_main \
 int main(int argc, string argv[]) do \
   signal(SIGINT, churmant_signal); \
   signal(SIGSEGV, churmant_signal); \
-  churmant_files = malloc(sizeof(FILE) * CHURMANT_MAXFILES); \
-  churmant_dynamics = malloc(sizeof(intptr_t) * CHURMANT_MAXDYNAMICS);
-#define churmant_mend \
+  churmant_files = malloc(sizeof(file) * CHURMANT_MAXFILES); \
+  churmant_dynamics = malloc(sizeof(ptr) * CHURMANT_MAXDYNAMICS); \
+  normal
+#define churmant_mend(x) \
+  else \
+    x(); \
+  end \
   for(0, i < churmant_findex, 1) do \
     fclose(churmant_files[i]); \
   end \
@@ -119,14 +132,20 @@ ptr *churmant_dynamics;
 file *churmant_files;
 int churmant_findex;
 int churmant_dindex;
+jmp_buf churmant_buffer;
 void churmant_signal(int signum) do
   match(signum)
     case(SIGINT)
-      printf("\n\n[program interrupted]\n");
+      #ifdef churmant_debug
+        println("program interrupted");
+      #endif
       exit(failure);
     close
     case(SIGSEGV)
-      printf("\n\n[program crashed]\n");
+      #ifdef churmant_debug  
+        println("program crashed, recovering");
+      #endif
+      longjmp(churmant_buffer, 1);
       exit(failure);
     close
   end

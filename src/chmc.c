@@ -1,17 +1,31 @@
 #include "churmant.h"
 
+int global_argc;
+int global_index;
+string *global_argv;
+
+func recover() do
+  fprintf(stderr, "%s: failed to compile file '%s'\n", *global_argv, global_argv[global_index]);
+  exit(failure);
+end
+
 churmant_main
+  global_argc = argc;
+  global_argv = argv;
   if argc == 1 then
-    println("no input files");
+    fprintf(stderr, "%s: no input files\n", *global_argv);
     exit(failure);
   end
-  int CMD_SIZE = size(char) * 512;
+  int CMD_SIZE = size(char) * 1024;
   int OUTPUT_SIZE = size(char) * 128;
   int ARG_SIZE = size(char) * 128;
   bool classic_allocation = false;
-  if file_find("churmant_args.txt") then
+  bool classic_types = false;
+  bool merge_libraries = false;
+  bool debugging = false;
+  if file_find("churmant_flags.txt") then
     file args = null;
-    file_open(args, "churmant_args.txt");
+    file_open(args, "churmant_flags.txt");
     string arg = null;
     allocate(arg, ARG_SIZE);
     strncpy(arg, "", ARG_SIZE);
@@ -29,12 +43,24 @@ churmant_main
       if *arg == '#' then
         continue;
       end
-      if strcmp(arg, "classic_allocation") == success then
+      if strcmp(arg, const(classic_allocation)) == success then
         classic_allocation = true;
-      else
-        printf("'%s' is not a valid flag\n", arg);
-        exit(failure);
+        continue;
       end
+      if strcmp(arg, const(classic_types)) == success then
+        classic_types = true;
+        continue;
+      end
+      if strcmp(arg, const(merge_libraries)) == success then
+        merge_libraries = true;
+        continue;
+      end
+      if strcmp(arg, const(debugging)) == success then
+        debugging = true;
+        continue;
+      end
+      printf("%s: '%s' is not a valid flag\n", *global_argv, arg);
+      exit(failure);
     end
   end
   string cmd = null;
@@ -44,10 +70,15 @@ churmant_main
   for(1, i < argc, 1) do
     long j = i;
     long at = -1;
-    strncpy(cmd, "@gcc -O3 -ffast-math -march=native -g -I include ", CMD_SIZE);
+    global_index = j;
+    strncpy(cmd, "gcc -O3 -ffast-math -march=native -g -I include -Werror=uninitialized ", CMD_SIZE);
     strncat(cmd, argv[i], CMD_SIZE);
     strncpy(output, argv[i], OUTPUT_SIZE);
     string arg = argv[j];
+    if not file_find(arg) then
+      fprintf(stderr, "%s: file '%s' does not exists\n", *global_argv, arg);
+      return(failure);
+    end
     for(0, arg[i] != '\0', 1) do
       if arg[i] != '.' then
         continue;
@@ -55,21 +86,39 @@ churmant_main
       at = i;
     end
     if at == -1 then
-      printf("'%s' is not a valid c source code\n", arg);
+      fprintf(stderr, "%s: '%s' is not a valid churmant source code, must be *.c\n", *global_argv, arg);
+      return(failure);
+    end
+    if strcmp(strrchr(arg, '.'), ".c") != success then
+      fprintf(stderr, "%s: '%s' is not a valid churmant source code, must be *.c\n", *global_argv, arg);
       return(failure);
     end
     if classic_allocation then
-      strncat(cmd, " -Dchurment_calloc ", CMD_SIZE);
+      strncat(cmd, " -Dchurmant_calloc ", CMD_SIZE);
+    end
+    if classic_types then
+      strncat(cmd, " -Dchurmant_ctypes ", CMD_SIZE);
+    end
+    if merge_libraries then
+      strncat(cmd, " -static ", CMD_SIZE);
+    end
+    if debugging then
+      strncat(cmd, " -Dchurmant_debug ", CMD_SIZE);
     end
     output[at] = '\0';
-    println(output);
     strncat(cmd, " -o ", CMD_SIZE);
     strncat(cmd, output, CMD_SIZE);
-    strncat(cmd, " -lm", CMD_SIZE);
-    int_fast8_t ret = system(cmd);
-    if ret != 0 then
-      println("gcc is not installed");
+    strncat(cmd, " -lm 2>&1", CMD_SIZE);
+    short ret = system(cmd);
+    if ret == 127 then
+      fprintf(stderr, "%s: gcc is not installed\n", *global_argv);
+      return(failure);
     end
+    if ret == 1 then
+      fprintf(stderr, "%s: failed to compile file '%s'\n", *global_argv, arg);
+      return(failure);
+    end
+    println(output);
     i = j;
   end
-churmant_mend
+churmant_mend(recover)
