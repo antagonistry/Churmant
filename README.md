@@ -42,5 +42,5 @@ churmant_mend(recover)
 ```
 
 The entire code that is written in **Churmant** is always *stack protected*, because whenever **SEGFAULT** happens, it quickly jumps to the recovery
-part of the *code*, at the `churmant_mend(x)`; 'x' is a *function* that can be called without needing any *arguments*. **NOTICE: Any part of the code that's
+part of the *code*, at the `churmant_mend(x)`; **x** is a *function* that can be called without needing any *arguments*. **NOTICE: Any part of the code that's
 not written in Churmant syntax might just straight up SEGFAULT.** The *language* is currently in the *development* state, you can help us, if you want.
