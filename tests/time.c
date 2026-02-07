@@ -1,12 +1,9 @@
-#include <stdio.h>
-#include <sys/time.h>
-#include <string.h>
 #include "churmant.h"
 
-function main(integer argc, string argv[]) do
-  const integer CMD_SIZE = sizeof(character) * 256;
+churmant_main
+  final integer CMD_SIZE = sizeof(character) * 256;
   struct timeval start_time, end_time;
-  float elapsed = 0;
+  float elapsed = 0.0f;
   string cmd = new(CMD_SIZE);
   strncpy(cmd, "", sizeof(cmd));
   for(1, i < argc, 1) do
@@ -29,6 +26,4 @@ function main(integer argc, string argv[]) do
   elapsed = (end_time.tv_sec - start_time.tv_sec) * 1000;
   elapsed += (end_time.tv_usec - start_time.tv_usec) / 1000;
   printf("%-16s%lf\n", "[elapsed]", elapsed);
-  delete(cmd);
-  return(successful);
-end
+churmant_mend

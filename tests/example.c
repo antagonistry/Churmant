@@ -17,5 +17,4 @@ churmant_main
   for(0, i < 8, 1) do
     printf("i = %lli;\n", i);
   end
-  return(success);
-end
+churmant_mend
