@@ -16,6 +16,11 @@ If you're wondering how the *syntax* would look like in an example here it is:
 ```c
 #include "churmant.h"
 
+func recover() do
+  println("unexpected behaviour");
+  exit(failure);
+end
+
 churmant_main
   int a = ~argc;
   string b = "Hello, World!";
@@ -33,7 +38,7 @@ churmant_main
   for(0, i < 8, 1) do
     printf("i = %lli;\n", i);
   end
-churmant_mend
+churmant_mend(recover)
 ```
 
 The entire code that is written in **Churmant** is always *stack protected*, because whenever **SEGFAULT** happens, it quickly jumps to the recovery
