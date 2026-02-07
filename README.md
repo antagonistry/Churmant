@@ -1,3 +1,6 @@
+<div align="center">
+    <img src="images/logo.png"/>
+</div>
 # CHurMant
 **Churmant** *(cure-ment)*, is a *compiler* for **C language**, it's used for producing *Lua-like* code, but run in the performance of the **C language**.
 It also is very easy to maintain and read the header file, if you want to *contribute*. You can also call **Churmant** a *programming language*,
