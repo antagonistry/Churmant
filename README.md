@@ -37,6 +37,5 @@ churmant_mend
 ```
 
 The entire code that is written in **Churmant**, its *stack* has *"second life"*, because whenever **segmentation fault** happens, it quickly jumps to the recovery
-part of the *code*. **NOTICE: Any part of the code that's not written in the safe way might just straight up crashed the program.** And the best practice for the
-*"second life"* is just to create another *strategy* to handle the issue. The *language* would be entirely safe, ***IF*** you use `bin/chmc` *compiler* and not the default
-**GCC** one. Basically, **Churmant** *compiler* is just a **GCC** *compiler* with some topping.
+part of the *code*. The best practice for the *"second life"* is just to create another *strategy* to handle the issue. The *language* would be entirely safe, ***IF*** you
+use `bin/chmc` *compiler* and not the default **GCC** one. Basically, **Churmant** *compiler* is just a **GCC** *compiler* with some topping.
