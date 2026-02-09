@@ -1,10 +1,3 @@
-#include "churmant.h"
-
-func recover() do
-  println("unexpected behaviour");
-  exit(failure);
-end
-
 churmant_main
   int a = ~argc;
   string b = "Hello, World!";
@@ -22,4 +15,4 @@ churmant_main
   for(0, i < 8, 1) do
     printf("i = %lli;\n", i);
   end
-churmant_mend(recover)
+churmant_mend

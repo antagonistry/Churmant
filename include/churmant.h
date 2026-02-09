@@ -1,4 +1,5 @@
 #pragma once
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -8,20 +9,27 @@
 #include <math.h>
 #include <unistd.h>
 #include <setjmp.h>
+#include <stdalign.h>
+#include <stdarg.h>
+#include <pthread.h>
+
 #ifndef __CHURMANT_H
 #define __CHURMANT_H
+
 #ifndef churmant_ctypes
   #define int int_fast32_t
   #define long int_fast64_t
   #define float double
   #define short int_fast16_t
 #endif
+
 #define tiny int_fast8_t
 #define string char*
 #define bool _Bool
 #define byte _Bool
 #define char char
-#define func intptr_t
+#define inline inline
+#define align alignas(32)
 #define ptr void*
 #define tuple ptr*
 #define file FILE*
@@ -42,59 +50,90 @@
 #define case(x) case(x): {
 #define close } break;
 #define default default: {
-#define print(x) fputs(x, stdout)
-#define println(x) puts(x)
 #define while(x) while(x) {
 #define for(x, y, z) for(long i = x; y; i += z)
+#define return(x) return(x);
+#define normal if not setjmp(churmant_buffer) then
+#define error else
+#define print(x) fputs(x, stdout)
+
+#define func(x) \
+ptr x do \
+  signal(SIGINT, churmant_signal); \
+  signal(SIGSEGV, churmant_signal); \
+  normal
+
+#define fend(x) \
+  error \
+    x(); \
+  end \
+end
+
+#define println(x) \
+fputs(x, stdout); \
+fputc('\n', stdout)
+
 #define const(x) #x
 #define final const
-#define return(x) return((func) x)
-#define normal if not setjmp(churmant_buffer) then
-#define quit(x) \
+
+#define exit(x) \
   for(0, i < churmant_findex, 1) do \
     fclose(churmant_files[i]); \
   end \
   for(0, i < churmant_dindex, 1) do \
     free(churmant_dynamics[i]); \
   end \
-  free(churmant_files); \
-  free(churmant_dynamics); \
   exit(x)
+
 #define union(x) union x {
 #define struct(x) struct x {
 #define enum(x) enum {
-#ifndef churmant_calloc
+
+#ifndef churmant_malloc
   #define allocate(x, y) \
+  if x != null then \
+    println("(churmant) allocated pointer"); \
+    longjmp(churmant_buffer, CHURMANT_JUMP); \
+  end \
   x = malloc(y); \
   churmant_dynamics[churmant_dindex] = x; \
   churmant_dindex++; \
   if churmant_dindex > CHURMANT_MAXDYNAMICS then \
-    printf("\n\n[churmant dynamics overflows]\n"); \
+    println("(churmant) dynamics overflows"); \
     exit(failure); \
   end \
   x
 #else
   #define allocate(x, y) x = malloc(y)
 #endif
+
 #define size(x) sizeof(x)
 #define type(x) typeof(x)
-#ifndef churmant_calloc
+
+#ifndef churmant_malloc
   #define file_open(x, y) \
+  if x != null then \
+    println("(churmant) allocated pointer"); \
+    longjmp(churmant_buffer, CHURMANT_JUMP); \
+  end \
   x = fopen(y, "r+"); \
   churmant_files[churmant_findex] = x; \
   churmant_findex++; \
   if churmant_findex > CHURMANT_MAXFILES then \
-    printf("\n\n[churmant files overflows]\n"); \
+    println("(churmant) files overflows"); \
     exit(failure); \
   end \
   x
 #else
   #define file_open(x, y) x = fopen(y, "r+")
 #endif
+
 #define file_find(x) (access(x, F_OK) == success)
+
 #define file_readline(x, y, z) \
 fgets(x, y, z); \
 x[strlen(x) - 1] = '\0'
+
 #define assert(x) \
 match(x) \
   case(false) \
@@ -102,30 +141,22 @@ match(x) \
     exit(failure); \
   close \
 end
-#define pointer(x, y, z) \
-x y = null; \
-allocate(y, z);
+
 #define churmant_main \
 int main(int argc, string argv[]) do \
+  churmant_argc = argc; \
+  churmant_argv = argv; \
   signal(SIGINT, churmant_signal); \
   signal(SIGSEGV, churmant_signal); \
-  churmant_files = malloc(sizeof(file) * CHURMANT_MAXFILES); \
-  churmant_dynamics = malloc(sizeof(ptr) * CHURMANT_MAXDYNAMICS); \
   normal
-#define churmant_mend(x) \
-  else \
-    x(); \
+
+#define churmant_mend \
+  error \
+    exit(failure); \
   end \
-  for(0, i < churmant_findex, 1) do \
-    fclose(churmant_files[i]); \
-  end \
-  for(0, i < churmant_dindex, 1) do \
-    free(churmant_dynamics[i]); \
-  end \
-  free(churmant_files); \
-  free(churmant_dynamics); \
-  return(success); \
+  exit(success); \
 end
+
 #define CHURMANT_MAXFILES 256
 #define CHURMANT_MAXDYNAMICS 512
 #define CHURMANT_UNKNOWN 0
@@ -133,8 +164,11 @@ end
 #define CHURMANT_LINUX 2
 #define CHURMANT_DARWIN 3
 #define CHURMANT_BSD 4
-ptr *churmant_dynamics;
-file *churmant_files;
+#define CHURMANT_JUMP 42
+
+ptr churmant_dynamics[CHURMANT_MAXDYNAMICS];
+file churmant_files[CHURMANT_MAXFILES];
+
 #if _WIN32
   int churmant_os = CHURMANT_WINDOWS;
 #elif __linux
@@ -146,24 +180,31 @@ file *churmant_files;
 #else
   int churmant_os = CHURMANT_UNKNOWN;
 #endif
+
+int churmant_argc;
+string *churmant_argv;
 int churmant_findex;
 int churmant_dindex;
 jmp_buf churmant_buffer;
+
 void churmant_signal(int signum) do
   match(signum)
     case(SIGINT)
       #ifdef churmant_debug
-        println("program interrupted");
+        println("(churmant/debugging) program interrupted");
       #endif
+
       exit(failure);
     close
     case(SIGSEGV)
-      #ifdef churmant_debug  
-        println("program crashed, recovering");
+      #ifdef churmant_debug
+        println("(churmant/debugging) program crashed, recovering");
       #endif
-      longjmp(churmant_buffer, 1);
+
+      longjmp(churmant_buffer, CHURMANT_JUMP);
       exit(failure);
     close
   end
 end
+
 #endif /* __CHURMANT_H */

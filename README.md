@@ -2,29 +2,20 @@
     <img src="images/logo.png"/>
 </div>
 
-# CHurMant
-**Churmant** *(cure-ment)*, is a *compiler* for **C language**, it's used for producing *Lua-like* code, but run in the performance of the **C language**.
-It also is very easy to maintain and read the header file, if you want to *contribute*. You can also call **Churmant** a *programming language*,
-if you want, or you can just said *"C's Churmant Syntax"*. And here are the *pros* and *cons* of the *language*:
+# Churmant
+**Churmant** *(cure-ment)*, is a *compiler* for **C** *language*, it's used for producing *Lua-like* code, but also run in a *blazingly* fast speed, when compared to others.
+It also is very easy to maintain and read the header file, if you want to *contribute*. The reason why **Churmant** is its own *language*, is because its *syntax*
+are not like **C** entirely, like `normal` *keyword* cannot be *stack* inside each other, for example.
 
-### Pros
+### Why Churmant
 - Lua-like Syntax
-- Stack Protection
+- Stack's "Second Life"
+- Safe Heap Allocation
 - Auto Garbage-Collection
-
-### Cons
-- Is Not Object Oriented Language
 
 If you're wondering how the *syntax* would look like in an example here it is:
 
 ```c
-#include "churmant.h"
-
-func recover() do
-  println("unexpected behaviour");
-  exit(failure);
-end
-
 churmant_main
   int a = ~argc;
   string b = "Hello, World!";
@@ -42,9 +33,10 @@ churmant_main
   for(0, i < 8, 1) do
     printf("i = %lli;\n", i);
   end
-churmant_mend(recover)
+churmant_mend
 ```
 
-The entire code that is written in **Churmant** is always *stack protected*, because whenever **SEGFAULT** happens, it quickly jumps to the recovery
-part of the *code*, at the `churmant_mend(x)`; **x** is a *function* that can be called without needing any *arguments*. **NOTICE: Any part of the code that's
-not written in Churmant syntax might just straight up SEGFAULT.** The *language* is currently in the *development* state, you can help us, if you want.
+The entire code that is written in **Churmant**, its *stack* has *"second life"*, because whenever **segmentation fault** happens, it quickly jumps to the recovery
+part of the *code*. **NOTICE: Any part of the code that's not written in the safe way might just straight up crashed the program.** And the best practice for the
+*"second life"* is just to create another *strategy* to handle the issue. The *language* would be entirely safe, ***IF*** you use `bin/chmc` *compiler* and not the default
+**GCC** one. Basically, **Churmant** *compiler* is just a **GCC** *compiler* with some topping.

@@ -1,5 +1,8 @@
 # churmant_args.txt
-# classic_allocation
+# manual_allocation
 # classic_types
 merge_libraries
 debugging
+# native_performance
+reduce_binary_size
+binary_readability

@@ -1,10 +1,8 @@
-#include "churmant.h"
-
-func recover() do
-  println("'a' is a pointer");
-end
-
 churmant_main
-  int *a = null;
-  printf("%d\n", *a);
-churmant_mend(recover)
+  normal
+    int *a = null;
+    printf("%d\n", *a);
+  error
+    println("'a' is a pointer");
+  end
+churmant_mend
