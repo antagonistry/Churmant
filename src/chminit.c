@@ -1,6 +1,7 @@
 func(clone())
   tiny ret = 0;
   println("(churmant/installer) cloning 'Churmant' repository to '~/.Churmant'");
+  
   if churmant_os == CHURMANT_WINDOWS then
     system("powershell \"wget https://github.com/antagonistry/Churmant/archive/master.zip -OutFile Churmant.zip\"");
     system("powershell \"Expand-Archive Churmant.zip -DestinationPath Churmant -Force -ErrorAction SilentlyContinue\"");
@@ -13,7 +14,9 @@ func(clone())
     ret = system("mv Churmant/Churmant-master ~/.Churmant");
     system("rm -rf Churmant.zip");
     system("rm -rf Churmant");
+    system("read -p \"press any key to continue\"");
   end
+
   if ret == 0 then
     println("(churmant/installer) successfully cloned 'Churmant' repository to '~/.Churmant'");
   else
@@ -47,8 +50,9 @@ churmant_main
   final int CHOICE_SIZE = size(char) * 4;
   string choice = null;
   allocate(choice, CHOICE_SIZE);
-  print("clone 'Churmant' repository [Y/n] ");
+  print("(churmant/installer) clone 'Churmant' repository [Y/n] ");
   file_readline(choice, CHOICE_SIZE, stdin);
+  
   match(*choice)
     case('y')
       clone();
@@ -63,12 +67,19 @@ churmant_main
       break;
     close
     default
-      println("the choice you've entered is invalid");
+      println("(churmant/installer) the choice you've entered is invalid");
+      
+      if churmant_os == CHURMANT_WINDOWS then
+        system("pause");
+      end
+
       exit(failure);
     close
   end 
-  print("compile the compiler [Y/n] ");
+
+  print("(churmant/installer) compile the compiler [Y/n] ");
   file_readline(choice, CHOICE_SIZE, stdin);
+  
   match(*choice)
     case('y')
       compile();
@@ -86,5 +97,9 @@ churmant_main
       println("the choice you've entered is invalid");
       exit(failure);
     close
+  end
+
+  if churmant_os == CHURMANT_WINDOWS then
+    system("pause");
   end
 churmant_mend
