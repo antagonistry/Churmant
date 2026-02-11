@@ -137,59 +137,29 @@ fputc('\n', stdout)
     exit(failure); \
   end \
   x
-  #define file_ropen(x, y) \
-  if x then \
-    println("(churmant) allocated pointer"); \
-    longjmp(churmant_buffer, CHURMANT_JUMP); \
-  end \
-  x = fopen(y, "rb"); \
-  if not x then \
-    println("(churmant) file not found / invalid path"); \
-    longjmp(churmant_buffer, CHURMANT_JUMP); \
-  end \
-  churmant_files[churmant_findex] = x; \
-  churmant_findex++; \
-  if churmant_findex > CHURMANT_MAXFILES then \
-    println("(churmant) files overflows"); \
-    exit(failure); \
-  end \
-  x
-  #define file_wopen(x, y) \
-  if x then \
-    println("(churmant) allocated pointer"); \
-    longjmp(churmant_buffer, CHURMANT_JUMP); \
-  end \
-  x = fopen(y, "wb"); \
-  if not x then \
-    println("(churmant) file not found / invalid path"); \
-    longjmp(churmant_buffer, CHURMANT_JUMP); \
-  end \
-  churmant_files[churmant_findex] = x; \
-  churmant_findex++; \
-  if churmant_findex > CHURMANT_MAXFILES then \
-    println("(churmant) files overflows"); \
-    exit(failure); \
-  end \
-  x
-  #define file_close(x) \
-  if not x then \
-    println("(churmant) unallocated pointer"); \
-    longjmp(churmant_buffer, CHURMANT_JUMP); \
-  end \
-  churmant_fcheck(x); \
-  if churmant_fret == -1 then \
-    println("(churmant) file not found"); \
-    longjmp(churmant_buffer, CHURMANT_JUMP); \
-  end \
-  fclose(x); \
-  x
 #else
   #define file_open(x, y) x = fopen(y, "r+")
-  #define file_ropen(x, y) x = fopen(y, "rb")
-  #define file_wopen(x, y) x = fopen(y, "wb")
   #define file_close(x, y) fclose(x)
 #endif
 
+#define file_write(x, y) \
+churmant_file = fopen(x, "wb"); \
+if not churmant_file then \
+  println("(churmant) file not found / invalid path"); \
+  longjmp(churmant_buffer, CHURMANT_JUMP); \
+end \
+fprintf(churmant_file, y); \
+fclose(churmant_file); \
+churmant_file = null
+#define file_append(x, y) \
+churmant_file = fopen(x, "ab"); \
+if not churmant_file then \
+  println("(churmant) file not found / invalid path"); \
+  longjmp(churmant_buffer, CHURMANT_JUMP); \
+end \
+fprintf(churmant_file, y); \
+fclose(churmant_file); \
+churmant_file = null
 #define file_find(x) (access(x, F_OK) == success)
 
 #define file_readline(x, y, z) \
@@ -228,6 +198,7 @@ end
 #define CHURMANT_BSD 4
 #define CHURMANT_JUMP 42
 
+file churmant_file;
 ptr churmant_dynamics[CHURMANT_MAXDYNAMICS];
 file churmant_files[CHURMANT_MAXFILES];
 
@@ -273,7 +244,7 @@ end
 func(churmant_fcheck(file pointer))
   churmant_fret = -1;
 
-  for(0, i < CHURMANT_MAXFILES, 1) do
+  for(0, i < churmant_findex, 1) do
     if pointer != churmant_files[i] then
       continue;
     end

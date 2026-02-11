@@ -86,11 +86,10 @@ fend(abort)
 func(validating_source(string arg))
   printf("(churmant/compiler) validating source file '%s'\n", arg);
   file source = null;
-  file_ropen(source, arg);
+  file_open(source, arg);
   string line = null;
   allocate(line, LINE_SIZE);
-  file out_file = null;
-  file_wopen(out_file, "._chmp.c");
+  file_write("._chmp.c", "");
   char allocated[ALLOCATED_SIZE][ALLOCATED_BUFFER_SIZE];
   long allocated_i = 0;
   long line_number = 0;
@@ -115,7 +114,7 @@ func(validating_source(string arg))
     if not tmp then
       break;
     end
-    
+
     /*if line[LINE_SIZE] != '\0' then
       fprintf(stderr, "(churmant/compiler) line %lli is too big\n", line_number);
       exit(failure);
@@ -181,9 +180,11 @@ func(validating_source(string arg))
       continue;
     end
 
-    char temp[strlen(line) + 1];
-    strncpy(temp, line, size(temp));
-    fprintf(out_file, "%s\n", temp);
+    string temp = null;
+    allocate(temp, LINE_SIZE);
+    strncpy(temp, line, LINE_SIZE);
+    strncat(temp, "\n", LINE_SIZE);
+    file_append("._chmp.c", temp);
 
     if semis > 1 then
       fprintf(stderr, "(churmant/compiler) line %lli, too many commands for a single line of code\n", line_number);
@@ -343,11 +344,11 @@ func(validating_source(string arg))
   end
 
   if fatal then
-    return false;
+    return((ptr) false);
   end
 
-  file_close(out_file);
   printf("(churmant/compiler) finished validating source file '%s'\n", arg);
+  return((ptr) true);
 fend(abort)
 
 func(allowing_flags(string cmd))
@@ -442,7 +443,7 @@ churmant_main
 
     output[at] = '\0';
     
-    if not validating_source(arg) then
+    if not (bool) validating_source(arg) then
       continue;
     end
 
