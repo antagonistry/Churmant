@@ -1,6 +1,6 @@
 func(clone())
   tiny ret = 0;
-  println("cloning 'Churmant' repository to '~/.Churmant'");
+  println("(churmant/installer) cloning 'Churmant' repository to '~/.Churmant'");
   if churmant_os == CHURMANT_WINDOWS then
     system("powershell \"wget https://github.com/antagonistry/Churmant/archive/master.zip -OutFile Churmant.zip\"");
     system("powershell \"Expand-Archive Churmant.zip -DestinationPath Churmant -Force -ErrorAction SilentlyContinue\"");
@@ -15,30 +15,30 @@ func(clone())
     system("rm -rf Churmant");
   end
   if ret == 0 then
-    println("successfully cloned 'Churmant' repository to '~/.Churmant'");
+    println("(churmant/installer) successfully cloned 'Churmant' repository to '~/.Churmant'");
   else
-    println("unable to clone 'Churmant' repository to '~/.Churmant'");
+    println("(churmant/installer) unable to clone 'Churmant' repository to '~/.Churmant'");
     exit(failure);
   end
 fend(abort)
 
 func(compile())
   tiny ret = 0;
-  println("compiling 'chmc' compiler");
+  println("(churmant/installer) compiling 'chmc' compiler");
   if churmant_os == CHURMANT_WINDOWS then
     ret = system("gcc -O3 -ffast-math -march=native -g -I %USERPROFILE%\\.Churmant\\include -Werror=uninitialized -o %USERPROFILE%\\.Churmant\\bin\\chmc %USERPROFILE%\\.Churmant\\src\\chmc.c\n");
   else
     ret = system("gcc -O3 -ffast-math -march=native -g -I ~/.Churmant/include -Werror=uninitialized -o ~/.Churmant/bin/chmc ~/.Churmant/src/chmc.c\n");
   end
   if ret == 0 then
-    println("successfully compiled 'chmc' compiler");
+    println("(churmant/installer) successfully compiled 'chmc' compiler");
   end
   if ret == 1 then
-    println("unable to compile 'chmc' compiler");
+    println("(churmant/installer) failed to compile 'chmc' compiler");
     exit(failure);
   end
   if ret == 127 then
-    println("'gcc' is not installed");
+    println("(churmant/installer) 'gcc' compiler is not installed");
     exit(failure);
   end
 fend(abort)

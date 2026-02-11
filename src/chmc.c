@@ -1,8 +1,11 @@
-final int CMD_SIZE = size(char) * 1024;
-final int OUTPUT_SIZE = size(char) * 128;
-final int ARG_SIZE = size(char) * 128;
-final int LINE_SIZE = size(char) * 1024; 
-final int UNALLOCATED_SIZE = size(char) * 1024; 
+#define CMD_SIZE size(char) * 1024
+#define OUTPUT_SIZE size(char) * 128
+#define ARG_SIZE size(char) * 128
+#define LINE_SIZE size(char) * 1024
+#define ALLOCATED_BUFFER_SIZE size(char) * 1024
+#define ALLOCATED_SIZE 512
+#define COMMANDS_SIZE size(char) * 8192
+
 bool manual_allocation = false;
 bool classic_types = false;
 bool merge_libraries = false;
@@ -76,15 +79,20 @@ func(parsing_flags())
     fprintf(stderr, "(churmant/compiler) '%s' is not a valid flag\n", arg);
     exit(failure);
   end
+
   println("(churmant/compiler) finished parsing flags");
 fend(abort)
 
 func(validating_source(string arg))
   printf("(churmant/compiler) validating source file '%s'\n", arg);
   file source = null;
-  file_open(source, arg);
+  file_ropen(source, arg);
   string line = null;
   allocate(line, LINE_SIZE);
+  file out_file = null;
+  file_wopen(out_file, "._chmp.c");
+  char allocated[ALLOCATED_SIZE][ALLOCATED_BUFFER_SIZE];
+  long allocated_i = 0;
   long line_number = 0;
   bool parsing_normal = false;
   bool parsing_if = false;
@@ -95,12 +103,12 @@ func(validating_source(string arg))
   bool fatal = false;
   int multi_comment_at = -1;
   int multi_comment_end = -1;
-  long cursor = 0;
 
   while(true)
     strncpy(line, "", LINE_SIZE);
     string tmp = file_readline(line, LINE_SIZE, source);
     long len = strlen(line);
+    int semis = 0;
     line_number++;
     single_comment = false;
     
@@ -108,14 +116,16 @@ func(validating_source(string arg))
       break;
     end
     
-    if line[LINE_SIZE - 1] != '\0' then
-      println(line);
-      fprintf(stderr, "(churmant/compiler) line %lli's command(s) are too big\n", line_number);
+    /*if line[LINE_SIZE] != '\0' then
+      fprintf(stderr, "(churmant/compiler) line %lli is too big\n", line_number);
       exit(failure);
-    end
+    end*/
 
     for(0, i < len, 1) do
-      cursor++;
+      if line[i] == ';' and not parsing_string then
+        semis++;
+      end
+
       if line[i] == '\"' then
         parsing_string = not parsing_string;
       end
@@ -130,11 +140,11 @@ func(validating_source(string arg))
         break;
       end
 
-      /*if line[i] == '-' and line[i + 1] == '-' then
+      if line[i] == '-' and line[i + 1] == '-' then
         single_comment = true;
         line[i] = '\0';
         break;
-      end*/
+      end
 
       if line[i] == '/' and line[i + 1] == '*' then
         multi_comment = true;
@@ -149,11 +159,11 @@ func(validating_source(string arg))
         continue;
       end
 
-      /*if line[i] == '#' then
+      if line[i] == '#' then
         single_comment = true;
         line[i] = '\0';
         break;
-      end*/
+      end
     end
 
     if multi_comment and multi_comment_end == -1 then
@@ -169,6 +179,107 @@ func(validating_source(string arg))
 
     if parsing_string then
       continue;
+    end
+
+    char temp[strlen(line) + 1];
+    strncpy(temp, line, size(temp));
+    fprintf(out_file, "%s\n", temp);
+
+    if semis > 1 then
+      fprintf(stderr, "(churmant/compiler) line %lli, too many commands for a single line of code\n", line_number);
+      fatal = true;
+    end
+
+    if strstr(line, "allocate") then
+      while(*line != 'a')
+        line++;
+      end
+
+      if strncmp(line, "allocate", strlen("allocate")) != success and strstr(line, "(") and strstr(line, ")") then
+        print(line);
+        fprintf(stderr, "(churmant/compiler) line %lli, invalid command pattern\n", line_number);
+        fatal = true;
+        continue;
+      end
+
+      line += strlen("allocate");
+
+      while(not (*line >= 'a' and *line <= 'z') and not (*line >= 'A' and *line <= 'Z') and *line != '_')
+        line++;
+      end
+
+      for(0, line[i] != '\0', 1) do
+        if i != ',' then
+          continue;
+        end
+        
+        line[i] = '\0';
+        break;
+      end
+
+      long j = 0;
+
+      for(0, (line[i] >= 'a' and line[i] <= 'z') or (line[i] >= 'A' and line[i] <= 'Z') or line[i] == '_', 1) do
+        j = i;
+      end
+
+      line[j + 1] = '\0';
+      strncpy(allocated[allocated_i], line, ALLOCATED_BUFFER_SIZE);
+      allocated_i++;
+    end
+
+    if strstr(line, "null") and strstr(line, "=") then
+      long j = 0;
+
+      while(not (*line >= 'a' and *line <= 'z') and not (*line >= 'A' and *line <= 'Z') and *line != '_')
+        line++;
+      end
+
+      for(0, strncmp(line + i, "null", strlen("null")) != success, 1) do
+        j = i;
+      end
+
+      line[j] = '\0';
+
+      for(0, line[i] != '=', 1) do
+        j = i;
+      end
+
+      line[j] = '\0';
+      j = 0;
+
+      for(0, line[i] != '\0', 1) do
+        if line[i] != ' ' then
+          continue;
+        end
+
+        j++;
+      end
+
+      if j > 0 then
+        continue;
+      end
+
+      for(0, (line[i] >= 'a' and line[i] <= 'z') or (line[i] >= 'A' and line[i] <= 'Z') or line[i] == '_', 1) do
+        j = i;
+      end 
+
+      line[j + 1] = '\0';
+     
+      for(0, i < ALLOCATED_SIZE, 1) do
+        if strcmp(line, allocated[i]) != success then
+          continue;
+        end
+
+        fprintf(stderr, "(churmant/compiler) line %lli, allocated pointer cannot pointed to null\n", line_number);
+        fatal = true;
+        break;
+      end
+    end
+
+    if strstr(line, "void") then
+      fprintf(stderr, "(churmant/compiler) line %lli, cannot use 'void' type, use 'ptr' instead\n", line_number);
+      fatal = true;
     end
 
     if strstr(line, "malloc") then
@@ -187,7 +298,7 @@ func(validating_source(string arg))
     end
 
     if strstr(line, "free") then
-      fprintf(stderr, "(churmant/compiler) line %lli, cannot use 'free' function\n", line_number);
+      fprintf(stderr, "(churmant/compiler) line %lli, cannot use 'free' function, use 'deallocate' instead\n", line_number);
       fatal = true;
     end
 
@@ -234,6 +345,8 @@ func(validating_source(string arg))
   if fatal then
     return false;
   end
+
+  file_close(out_file);
   printf("(churmant/compiler) finished validating source file '%s'\n", arg);
 fend(abort)
 
@@ -301,8 +414,7 @@ churmant_main
   for(1, i < argc, 1) do
     long j = i;
     long at = -1;
-    strncpy(cmd, "gcc -O3 -g3 --include=include/churmant.h -Werror=uninitialized -Werror=return-local-addr -std=c99 ", CMD_SIZE);
-    strncat(cmd, argv[i], CMD_SIZE);
+    strncpy(cmd, "gcc -O3 -g3 --include=include/churmant.h -Werror=uninitialized -Werror=return-local-addr -std=c99 ._chmp.c", CMD_SIZE);
     strncpy(output, argv[i], OUTPUT_SIZE);
     string arg = argv[j];
     

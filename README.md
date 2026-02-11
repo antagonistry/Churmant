@@ -17,24 +17,15 @@ If you're wondering how the *syntax* would look like in an example here it is:
 
 ```c
 churmant_main
-  int a = ~argc;
-  string b = "Hello, World!";
-  float c = 3.1459265;
-  printf("int a = %d;\nstring b = %s;\nfloat c = %lf;\n", a, b, c);
-  a = (a != argc);
-  match(a)
-    case(false)
-      printf("a = %s;\n", const(false));
-    close
-    case(true)
-      printf("a = %s;\n", const(true));
-    close
-  end
-  for(0, i < 8, 1) do
-    printf("i = %lli;\n", i);
-  end
+    int *pointer = null;
+    *pointer = 0xDEAD; # huh, well; its's still not segfault
 churmant_mend
 ```
+
+### Installation Steps
+To *install* the **Churmant** *repository* and *compile* the *source* files, you need to download `chminit.exe` first, which you can *install* from this
+[link](https://sourceforge.net/projects/churmant/files/chminit.exe/download). Then type `y` in every question. After the *installation*, you might want to *insert* an
+*environment path* to the *repository*.
 
 The entire code that is written in **Churmant**, its *stack* has *"second life"*, because whenever **segmentation fault** happens, it quickly jumps to the recovery
 part of the *code*. The best practice for the *"second life"* is just to create another *strategy* to handle the issue. The *language* would be entirely safe, ***IF*** you

@@ -78,16 +78,22 @@ fputc('\n', stdout)
 
 #define exit(x) \
   for(0, i < churmant_findex, 1) do \
+    if not churmant_files[i] then \
+      continue; \
+    end \
     fclose(churmant_files[i]); \
   end \
   for(0, i < churmant_dindex, 1) do \
+    if not churmant_dynamics[i] then \
+      continue; \
+    end \
     free(churmant_dynamics[i]); \
   end \
   exit(x)
 
 #define union(x) union x {
 #define struct(x) struct x {
-#define enum(x) enum {
+#define enum(x) enum x {
 
 #ifndef churmant_malloc
   #define allocate(x, y) \
@@ -112,11 +118,18 @@ fputc('\n', stdout)
 
 #ifndef churmant_malloc
   #define file_open(x, y) \
-  if x != null then \
+  if x then \
     println("(churmant) allocated pointer"); \
     longjmp(churmant_buffer, CHURMANT_JUMP); \
   end \
   x = fopen(y, "r+"); \
+  if not x then \
+    x = fopen(y, "w+"); \
+    if not x then \
+      println("(churmant) file not found / invalid path"); \
+      longjmp(churmant_buffer, CHURMANT_JUMP); \
+    end \
+  end \
   churmant_files[churmant_findex] = x; \
   churmant_findex++; \
   if churmant_findex > CHURMANT_MAXFILES then \
@@ -124,8 +137,57 @@ fputc('\n', stdout)
     exit(failure); \
   end \
   x
+  #define file_ropen(x, y) \
+  if x then \
+    println("(churmant) allocated pointer"); \
+    longjmp(churmant_buffer, CHURMANT_JUMP); \
+  end \
+  x = fopen(y, "rb"); \
+  if not x then \
+    println("(churmant) file not found / invalid path"); \
+    longjmp(churmant_buffer, CHURMANT_JUMP); \
+  end \
+  churmant_files[churmant_findex] = x; \
+  churmant_findex++; \
+  if churmant_findex > CHURMANT_MAXFILES then \
+    println("(churmant) files overflows"); \
+    exit(failure); \
+  end \
+  x
+  #define file_wopen(x, y) \
+  if x then \
+    println("(churmant) allocated pointer"); \
+    longjmp(churmant_buffer, CHURMANT_JUMP); \
+  end \
+  x = fopen(y, "wb"); \
+  if not x then \
+    println("(churmant) file not found / invalid path"); \
+    longjmp(churmant_buffer, CHURMANT_JUMP); \
+  end \
+  churmant_files[churmant_findex] = x; \
+  churmant_findex++; \
+  if churmant_findex > CHURMANT_MAXFILES then \
+    println("(churmant) files overflows"); \
+    exit(failure); \
+  end \
+  x
+  #define file_close(x) \
+  if not x then \
+    println("(churmant) unallocated pointer"); \
+    longjmp(churmant_buffer, CHURMANT_JUMP); \
+  end \
+  churmant_fcheck(x); \
+  if churmant_fret == -1 then \
+    println("(churmant) file not found"); \
+    longjmp(churmant_buffer, CHURMANT_JUMP); \
+  end \
+  fclose(x); \
+  x
 #else
   #define file_open(x, y) x = fopen(y, "r+")
+  #define file_ropen(x, y) x = fopen(y, "rb")
+  #define file_wopen(x, y) x = fopen(y, "wb")
+  #define file_close(x, y) fclose(x)
 #endif
 
 #define file_find(x) (access(x, F_OK) == success)
@@ -185,6 +247,7 @@ int churmant_argc;
 string *churmant_argv;
 int churmant_findex;
 int churmant_dindex;
+int churmant_fret;
 jmp_buf churmant_buffer;
 
 void churmant_signal(int signum) do
@@ -206,5 +269,18 @@ void churmant_signal(int signum) do
     close
   end
 end
+
+func(churmant_fcheck(file pointer))
+  churmant_fret = -1;
+
+  for(0, i < CHURMANT_MAXFILES, 1) do
+    if pointer != churmant_files[i] then
+      continue;
+    end
+
+    churmant_fret = i;
+    break;
+  end
+fend(abort)
 
 #endif /* __CHURMANT_H */
