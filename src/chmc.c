@@ -33,8 +33,8 @@ func(parsing_flags())
       arg++;
     end
     
-    while(arg[strlen(arg) - 1] == ' ' or arg[strlen(arg) - 1] == '\t')
-      arg[strlen(arg) - 1] = '\0';
+    while(arg[len(arg) - 1] == ' ' or arg[len(arg) - 1] == '\t')
+      arg[len(arg) - 1] = '\0';
     end
     
     if *arg == '#' then
@@ -97,6 +97,7 @@ func(validating_source(string arg))
   bool parsing_if = false;
   bool parsing_else = false;
   bool parsing_string = false;
+  bool parsing_case = false;
   bool single_comment = false;
   bool multi_comment = false;
   bool fatal = false;
@@ -106,7 +107,6 @@ func(validating_source(string arg))
   while(true)
     strncpy(line, "", LINE_SIZE);
     string tmp = file_readline(line, LINE_SIZE, source);
-    long len = strlen(line);
     int semis = 0;
     line_number++;
     single_comment = false;
@@ -114,13 +114,15 @@ func(validating_source(string arg))
     if not tmp then
       break;
     end
-
-    /*if line[LINE_SIZE] != '\0' then
+    
+    /*if line[LINE_SIZE - 1] != '\0' then
       fprintf(stderr, "(churmant/compiler) line %lli is too big\n", line_number);
       exit(failure);
     end*/
 
-    for(0, i < len, 1) do
+    long line_len = len(line);
+
+    for(0, i < line_len, 1) do
       if line[i] == ';' and not parsing_string then
         semis++;
       end
@@ -145,35 +147,11 @@ func(validating_source(string arg))
         break;
       end
 
-      if line[i] == '/' and line[i + 1] == '*' then
-        multi_comment = true;
-        multi_comment_at = i;
-        i++;
-        continue;
-      end
-
-      if line[i] == '*' and line[i + 1] == '/' then
-        i++;
-        multi_comment_end = ++i;
-        continue;
-      end
-
       if line[i] == '#' then
         single_comment = true;
         line[i] = '\0';
         break;
       end
-    end
-
-    if multi_comment and multi_comment_end == -1 then
-      line[multi_comment_at] = '\0';
-      multi_comment_at = 0;
-    end
-
-    if multi_comment and multi_comment_end != -1 then
-      line += multi_comment_end;
-      multi_comment_at = -1;
-      multi_comment_end = -1;
     end
 
     if parsing_string then
@@ -186,9 +164,33 @@ func(validating_source(string arg))
     strncat(temp, "\n", LINE_SIZE);
     file_append("._chmp.c", temp);
 
+    while(not (*line >= 'a' and *line <= 'z') and not (*line >= 'A' and *line <= 'Z') and *line != '_')
+      line++;
+    end
+
     if semis > 1 then
       fprintf(stderr, "(churmant/compiler) line %lli, too many commands for a single line of code\n", line_number);
       fatal = true;
+    end
+
+    if strstr(line, "/*") then
+      fprintf(stderr, "(churmant/compiler) line %lli, cannot use 'C' style multi-comment\n", line_number);
+      fatal = true;
+    end
+
+    if strstr(line, "char") then
+      fprintf(stderr, "(churmant/compiler) line %lli, cannot use 'char' type, use 'int' instead\n", line_number);
+      fatal = true;
+    end
+
+    if strstr(line, "*") and strstr(line, "=") and not strstr(line, "null") then
+      if strncmp(line, "int", len("int")) == success or
+          strncmp(line, "long", len("long")) == success or 
+          strncmp(line, "bool", len("bool")) == success or
+          strncmp(line, "byte", len("byte")) == success then
+        fprintf(stderr, "(churmant/compiler) line %lli, pointer always need to be initialized as 'null'\n", line_number);
+        fatal = true;
+      end
     end
 
     if strstr(line, "allocate") then
@@ -196,14 +198,14 @@ func(validating_source(string arg))
         line++;
       end
 
-      if strncmp(line, "allocate", strlen("allocate")) != success and strstr(line, "(") and strstr(line, ")") then
+      if strncmp(line, "allocate", len("allocate")) != success and strstr(line, "(") and strstr(line, ")") then
         print(line);
         fprintf(stderr, "(churmant/compiler) line %lli, invalid command pattern\n", line_number);
         fatal = true;
         continue;
       end
 
-      line += strlen("allocate");
+      line += len("allocate");
 
       while(not (*line >= 'a' and *line <= 'z') and not (*line >= 'A' and *line <= 'Z') and *line != '_')
         line++;
@@ -236,7 +238,7 @@ func(validating_source(string arg))
         line++;
       end
 
-      for(0, strncmp(line + i, "null", strlen("null")) != success, 1) do
+      for(0, strncmp(line + i, "null", len("null")) != success, 1) do
         j = i;
       end
 
@@ -276,7 +278,7 @@ func(validating_source(string arg))
         fatal = true;
         break;
       end
-    end
+    end 
 
     if strstr(line, "void") then
       fprintf(stderr, "(churmant/compiler) line %lli, cannot use 'void' type, use 'ptr' instead\n", line_number);
@@ -305,6 +307,19 @@ func(validating_source(string arg))
 
     if strstr(line, "if") then
       parsing_if = true;
+    end
+
+    if strstr(line, "case") or strstr(line, "default") then
+      if parsing_case then
+        fprintf(stderr, "(churmant/compiler) line %lli, cannot stack 'case' or 'default' conditions inside each other\n", line_number);
+        fatal = true;
+      end
+
+      parsing_case = true;
+    end
+
+    if strstr(line, "close") then
+      parsing_case = false;
     end
 
     if strstr(line, "normal") then
@@ -344,11 +359,11 @@ func(validating_source(string arg))
   end
 
   if fatal then
-    return((ptr) false);
+    return(false);
   end
 
   printf("(churmant/compiler) finished validating source file '%s'\n", arg);
-  return((ptr) true);
+  return(true);
 fend(abort)
 
 func(allowing_flags(string cmd))
@@ -443,7 +458,7 @@ churmant_main
 
     output[at] = '\0';
     
-    if not (bool) validating_source(arg) then
+    if not validating_source(arg) then
       continue;
     end
 

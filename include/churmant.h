@@ -30,7 +30,8 @@
 #define char char
 #define inline inline
 #define align alignas(32)
-#define ptr void*
+#define ptr intptr_t
+#define std_ptr void*
 #define tuple ptr*
 #define file FILE*
 #define true 1
@@ -84,7 +85,7 @@ fputc('\n', stdout)
     fclose(churmant_files[i]); \
   end \
   for(0, i < churmant_dindex, 1) do \
-    if not churmant_dynamics[i] then \
+    if churmant_dynamics[i] != null then \
       continue; \
     end \
     free(churmant_dynamics[i]); \
@@ -148,7 +149,7 @@ if not churmant_file then \
   println("(churmant) file not found / invalid path"); \
   longjmp(churmant_buffer, CHURMANT_JUMP); \
 end \
-fprintf(churmant_file, y); \
+fwrite(y, 1, len(y), churmant_file); \
 fclose(churmant_file); \
 churmant_file = null
 #define file_append(x, y) \
@@ -157,14 +158,14 @@ if not churmant_file then \
   println("(churmant) file not found / invalid path"); \
   longjmp(churmant_buffer, CHURMANT_JUMP); \
 end \
-fprintf(churmant_file, y); \
+fwrite(y, 1, len(y), churmant_file); \
 fclose(churmant_file); \
 churmant_file = null
 #define file_find(x) (access(x, F_OK) == success)
 
 #define file_readline(x, y, z) \
 fgets(x, y, z); \
-x[strlen(x) - 1] = '\0'
+x[len(x) - 1] = '\0'
 
 #define assert(x) \
 match(x) \
@@ -178,6 +179,7 @@ end
 int main(int argc, string argv[]) do \
   churmant_argc = argc; \
   churmant_argv = argv; \
+  churmant_init(); \
   signal(SIGINT, churmant_signal); \
   signal(SIGSEGV, churmant_signal); \
   normal
@@ -199,7 +201,7 @@ end
 #define CHURMANT_JUMP 42
 
 file churmant_file;
-ptr churmant_dynamics[CHURMANT_MAXDYNAMICS];
+std_ptr churmant_dynamics[CHURMANT_MAXDYNAMICS];
 file churmant_files[CHURMANT_MAXFILES];
 
 #if _WIN32
@@ -240,6 +242,26 @@ void churmant_signal(int signum) do
     close
   end
 end
+
+long len(string var) do
+  long i = 0;
+
+  while(var[i])
+    i++;
+  end
+
+  return i;
+end
+
+func(churmant_init())
+  for(0, i < CHURMANT_MAXFILES, 1) do
+    churmant_files[i] = null;
+  end
+
+  for(0, i < CHURMANT_MAXDYNAMICS, 1) do
+    churmant_dynamics[i] = null;
+  end
+fend(abort)
 
 func(churmant_fcheck(file pointer))
   churmant_fret = -1;
