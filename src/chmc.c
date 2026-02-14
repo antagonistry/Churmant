@@ -103,9 +103,9 @@ void parsing_libs() do
   allocate(arg, ARG_SIZE);
   strncpy(arg, "", ARG_SIZE);
 
-  strncpy(libs, "-L ~/.Churmant/lib", LIBS_SIZE);
+  strncpy(libs, "-L ~/.Churmant/lib -l *", LIBS_SIZE);
   
-  while(true)
+  /*while(true)
     string line = file_readline(arg, ARG_SIZE, args);
     
     if not line then
@@ -127,7 +127,7 @@ void parsing_libs() do
     strncat(libs, " -l \"", LIBS_SIZE);
     strncat(libs, arg, LIBS_SIZE);
     strncat(libs, "\"", LIBS_SIZE);
-  end
+  end*/
 
   println("(churmant/compiler) finished parsing libraries");
 end
@@ -665,7 +665,7 @@ void help() do
   println("  binary_readability\n");
 end
 
-int main(int argc, string *argv) do
+churmant_main
   if argc == 1 then
     fprintf(stderr, "(churmant/compiler) no input files\n");
     exit(failure);
@@ -695,7 +695,7 @@ int main(int argc, string *argv) do
 
     long j = i;
     long at = -1;
-    strncpy(cmd, "gcc -O3 -g3 --include=include/churmant.h -nodefaultlibs -Werror=uninitialized -Werror=return-local-addr -std=c99 ._chmp.c", CMD_SIZE);
+    strncpy(cmd, "gcc -O3 -g3 --include=include/churmant.h -Werror=uninitialized -Werror=return-local-addr -std=c99 ._chmp.c", CMD_SIZE);
     strncpy(output, argv[i], OUTPUT_SIZE);
     string arg = argv[j];
     
@@ -759,6 +759,5 @@ int main(int argc, string *argv) do
     
     printf("(churmant/compiler) compiled, binary at '%s'\n", output);
     i = j;
-    resetting_flags();
   end
-end
+churmant_mend

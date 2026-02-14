@@ -1,17 +1,19 @@
-func(clone())
+void clone() do
   tiny ret = 0;
   println("(churmant/installer) cloning 'Churmant' repository to '~/.Churmant'");
   
   if churmant_os == CHURMANT_WINDOWS then
+    system("powershell \"Remove-Item %USERPROFILE%\\.Churmant -Recurse -Force -ErrorAction SilentlyContinue\"");
     system("powershell \"wget https://github.com/antagonistry/Churmant/archive/master.zip -OutFile Churmant.zip\"");
     system("powershell \"Expand-Archive Churmant.zip -DestinationPath Churmant -Force -ErrorAction SilentlyContinue\"");
-    ret = system("powershell \"Move-Item Churmant\\Churmant-master %USERPROFILE%\\.Churmant\" -Force -ErrorAction SilentlyContinue\"");
+    ret = system("powershell \"Move-Item Churmant\\Churmant-master\\* %USERPROFILE%\\.Churmant -Force -ErrorAction SilentlyContinue\"");
     system("powershell \"Remove-Item Churmant.zip -Force -ErrorAction SilentlyContinue\"");
     system("powershell \"Remove-Item Churmant -Force -ErrorAction SilentlyContinue\"");
   else
+    system("rm -rf ~/.Churmant");
     system("curl https://github.com/antagonistry/Churmant/archive/master.zip -L -o Churmant.zip");
     system("unzip Churmant.zip -d Churmant");
-    ret = system("mv Churmant/Churmant-master ~/.Churmant");
+    ret = system("mv Churmant/Churmant-master/* ~/.Churmant");
     system("rm -rf Churmant.zip");
     system("rm -rf Churmant");
     system("read -p \"press any key to continue\"");
@@ -23,9 +25,9 @@ func(clone())
     println("(churmant/installer) unable to clone 'Churmant' repository to '~/.Churmant'");
     exit(failure);
   end
-fend(abort)
+end
 
-func(compile())
+void compile() do
   tiny ret = 0;
   println("(churmant/installer) compiling 'chmc' compiler");
   if churmant_os == CHURMANT_WINDOWS then
@@ -44,7 +46,7 @@ func(compile())
     println("(churmant/installer) 'gcc' compiler is not installed");
     exit(failure);
   end
-fend(abort)
+end
 
 churmant_main
   final int CHOICE_SIZE = size(char) * 4;
@@ -54,6 +56,9 @@ churmant_main
   file_readline(choice, CHOICE_SIZE, stdin);
   
   match(*choice)
+    case('\0')
+      clone();
+    close
     case('y')
       clone();
     close
@@ -81,6 +86,9 @@ churmant_main
   file_readline(choice, CHOICE_SIZE, stdin);
   
   match(*choice)
+    case('\0')
+      compile();
+    close
     case('y')
       compile();
     close
@@ -95,6 +103,11 @@ churmant_main
     close
     default
       println("the choice you've entered is invalid");
+      
+      if churmant_os == CHURMANT_WINDOWS then
+        system("pause");
+      end
+
       exit(failure);
     close
   end
