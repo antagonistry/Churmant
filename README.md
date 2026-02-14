@@ -20,22 +20,12 @@ are not like **C** entirely, like `normal` *keyword* cannot be *stack* inside ea
 
 If you are wondering how would the *syntax* look like, here's an example of an *error* that would be caught on the *compiler*.
 
-<div style="font: monospace; border: 8px rgb(54, 60, 66); border-radius: 4px; padding: 16px; width: 100%; background-color: rgb(54, 60, 66); color: rgb(255, 255, 255);">
-    <span style="color: rgb(227, 216, 136);">churmant_main</span>
-    <br>
-    &emsp;<span style="color: rgb(136, 188, 227);">int</span>
-    { color: rgb(136, 188, 227); }
-    <span class="point">*</span>pointer
-    =
-    <span style="color: rgb(227, 136, 136);">null</span>;
-    <br>
-    &emsp;<span style="color: rgb(199, 199, 199);">*</span>pointer
-    =
-    <span style="color: rgb(227, 136, 136);">0xDEAD</span>;
-    <span style="color: rgb(133, 133, 133);"># line 3, cannot use unallocated pointer</span>
-    <br>
-    <span style="color: rgb(227, 216, 136);">churmant_mend</span>
-</div>
+```chm
+churmant_main
+    int *a = null;
+    *a = 0xDEAD; # line 3, cannot use unallocated pointer
+churmant_mend
+```
 
 ## Installation Steps
 
