@@ -102,7 +102,7 @@ fputc('\n', stdout)
     println("(churmant) allocated pointer"); \
     longjmp(churmant_buffer, CHURMANT_JUMP); \
   end \
-  x = malloc(y); \
+  x = calloc(1, y); \
   churmant_dynamics[churmant_dindex] = x; \
   churmant_dindex++; \
   if churmant_dindex > CHURMANT_MAXDYNAMICS then \
@@ -111,7 +111,7 @@ fputc('\n', stdout)
   end \
   x
 #else
-  #define allocate(x, y) x = malloc(y)
+  #define allocate(x, y) x = calloc(1, y)
 #endif
 
 #define size(x) sizeof(x)
@@ -191,6 +191,7 @@ int main(int argc, string argv[]) do \
   exit(success); \
 end
 
+#define CHURMANT_VERSION 1.00
 #define CHURMANT_MAXFILES 256
 #define CHURMANT_MAXDYNAMICS 512
 #define CHURMANT_UNKNOWN 0

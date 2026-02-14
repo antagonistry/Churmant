@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="images/logo.png"/>
+    <img src="images/social.png"/>
 </div>
 
 # Churmant

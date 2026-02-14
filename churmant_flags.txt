@@ -1,4 +1,4 @@
-# churmant_args.txt
+# churmant_flags.txt
 # manual_allocation
 # classic_types
 merge_libraries
