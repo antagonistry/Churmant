@@ -4,14 +4,15 @@ void clone() do
   
   if churmant_os == CHURMANT_WINDOWS then
     system("powershell \"Remove-Item %USERPROFILE%\\.Churmant -Recurse -Force -ErrorAction SilentlyContinue\"");
-    system("powershell \"wget https://github.com/antagonistry/Churmant/archive/master.zip -OutFile Churmant.zip\"");
+    system("powershell \"wget https://github.com/antagonistry/Churmant/archive/refs/heads/master.zip -OutFile Churmant.zip\"");
     system("powershell \"Expand-Archive Churmant.zip -DestinationPath Churmant -Force -ErrorAction SilentlyContinue\"");
+    system("powershell \"mkdir %USERPROFILE%\\.Churmant -Force -ErrorAction SilentlyContinue\"");
     ret = system("powershell \"Move-Item Churmant\\Churmant-master\\* %USERPROFILE%\\.Churmant -Force -ErrorAction SilentlyContinue\"");
     system("powershell \"Remove-Item Churmant.zip -Force -ErrorAction SilentlyContinue\"");
-    system("powershell \"Remove-Item Churmant -Force -ErrorAction SilentlyContinue\"");
+    system("powershell \"Remove-Item Churmant -Recurse -Force -ErrorAction SilentlyContinue\"");
   else
     system("rm -rf ~/.Churmant");
-    system("curl https://github.com/antagonistry/Churmant/archive/master.zip -L -o Churmant.zip");
+    system("curl https://github.com/antagonistry/Churmant/archive/refs/heads/master.zip -L -o Churmant.zip");
     system("unzip Churmant.zip -d Churmant");
     ret = system("mv Churmant/Churmant-master/* ~/.Churmant");
     system("rm -rf Churmant.zip");
