@@ -29,6 +29,7 @@ churmant_mend
 
 ## Installation Steps
 
-To *install* the **Churmant** *repository* and *compile* the *source* files, you need to download `chminit.exe` first, which you can *install* from this
-[link](https://sourceforge.net/projects/churmant/files/chminit.exe/download). Then type `y` in every question. After the *installation*, you might want to *insert* an
-*environment path* to the *repository*.
+To *install* the **Churmant** *repository* and *compile* the *source* files, you need to download `chminit.exe`, then type `y` in every question. After the *installation*,
+you might want to *insert* an *environment path* to the *repository*.
+
+<a href="https://sourceforge.net/projects/churmant/files/latest/download"><img alt="Download Churmant" src="https://a.fsdn.com/con/app/sf-download-button" width=276 height=48 srcset="https://a.fsdn.com/con/app/sf-download-button?button_size=2x 2x"></a>
