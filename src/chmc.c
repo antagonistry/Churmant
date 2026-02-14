@@ -89,49 +89,6 @@ void parsing_flags() do
   println("(churmant/compiler) finished parsing flags");
 end
 
-void parsing_libs() do
-  println("(churmant/compiler) parsing libraries");
- 
-  if not file_find("~/.Churmant/churmant_libs.txt") then
-    println("(churmant/compiler) finished parsing libraries");
-    return;
-  end
-
-  file args = null;
-  file_open(args, "~/.Churmant/churmant_libs.txt");
-  string arg = null;
-  allocate(arg, ARG_SIZE);
-  strncpy(arg, "", ARG_SIZE);
-
-  strncpy(libs, "-L ~/.Churmant/lib -l *", LIBS_SIZE);
-  
-  /*while(true)
-    string line = file_readline(arg, ARG_SIZE, args);
-    
-    if not line then
-      break;
-    end
-    
-    while(*arg == ' ' or *arg == '\t')
-      arg++;
-    end
-    
-    while(arg[len(arg) - 1] == ' ' or arg[len(arg) - 1] == '\t')
-      arg[len(arg) - 1] = '\0';
-    end
-    
-    if *arg == '#' then
-      continue;
-    end
-    
-    strncat(libs, " -l \"", LIBS_SIZE);
-    strncat(libs, arg, LIBS_SIZE);
-    strncat(libs, "\"", LIBS_SIZE);
-  end*/
-
-  println("(churmant/compiler) finished parsing libraries");
-end
-
 bool validating_source(string arg) do
   printf("(churmant/compiler) validating source file '%s'\n", arg);
   file source = null;
@@ -679,7 +636,6 @@ churmant_main
   allocate(line, LINE_SIZE);
   allocate(libs, LIBS_SIZE);
   parsing_flags();
-  parsing_libs();
   
   for(1, i < argc, 1) do 
 
@@ -695,7 +651,7 @@ churmant_main
 
     long j = i;
     long at = -1;
-    strncpy(cmd, "gcc -O3 -g3 --include=include/churmant.h -Werror=uninitialized -Werror=return-local-addr -std=c99 ._chmp.c", CMD_SIZE);
+    strncpy(cmd, "gcc -O3 -g3 -static-libgcc -Wl,-rpath=. -L. --include=include/churmant.h -Werror=uninitialized -Werror=return-local-addr -std=c99 ._chmp.c", CMD_SIZE);
     strncpy(output, argv[i], OUTPUT_SIZE);
     string arg = argv[j];
     
