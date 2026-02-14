@@ -1,0 +1,15 @@
+# churmant_libs.txt
+
+# WARNING: change this at your own risk!
+
+stdio.so
+stdlib.so
+stdint.so
+string.so
+time.so
+unistd.so
+setjmp.so
+stdalign.so
+stdarg.so
+
+# END OF WARNING

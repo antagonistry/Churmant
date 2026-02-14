@@ -9,20 +9,26 @@
 #define PARTS_BUFFER_SIZE size(char) * 256
 #define PARTS_SIZE 256
 #define COMMANDS_SIZE size(char) * 8192
+#define LIBS_SIZE size(char) * 4096
 
-bool finished_flags = false;
 bool manual_allocation = false;
 bool classic_types = false;
-bool merge_libraries = false;
 bool debugging = false;
 bool native_performance = false;
 bool reduce_binary_size = false;
 bool binary_readability = false;
+string libs = null;
 
-func(parsing_flags())
+void parsing_flags() do
   println("(churmant/compiler) parsing flags");
+  
+  if not file_find("~/.Churmant/churmant_flags.txt") then
+    println("(churmant/compiler) finished parsing flags");
+    return;
+  end
+
   file args = null;
-  file_open(args, "churmant_flags.txt");
+  file_open(args, "~/.Churmant/churmant_flags.txt");
   string arg = null;
   allocate(arg, ARG_SIZE);
   strncpy(arg, "", ARG_SIZE);
@@ -56,11 +62,6 @@ func(parsing_flags())
       continue;
     end
     
-    if strcmp(arg, const(merge_libraries)) == success then
-      merge_libraries = true;
-      continue;
-    end
-    
     if strcmp(arg, const(debugging)) == success then
       debugging = true;
       continue;
@@ -86,9 +87,52 @@ func(parsing_flags())
   end
 
   println("(churmant/compiler) finished parsing flags");
-fend(abort)
+end
 
-func(validating_source(string arg))
+void parsing_libs() do
+  println("(churmant/compiler) parsing libraries");
+ 
+  if not file_find("~/.Churmant/churmant_libs.txt") then
+    println("(churmant/compiler) finished parsing libraries");
+    return;
+  end
+
+  file args = null;
+  file_open(args, "~/.Churmant/churmant_libs.txt");
+  string arg = null;
+  allocate(arg, ARG_SIZE);
+  strncpy(arg, "", ARG_SIZE);
+
+  strncpy(libs, "-L ~/.Churmant/libs", LIBS_SIZE);
+  
+  while(true)
+    string line = file_readline(arg, ARG_SIZE, args);
+    
+    if not line then
+      break;
+    end
+    
+    while(*arg == ' ' or *arg == '\t')
+      arg++;
+    end
+    
+    while(arg[len(arg) - 1] == ' ' or arg[len(arg) - 1] == '\t')
+      arg[len(arg) - 1] = '\0';
+    end
+    
+    if *arg == '#' then
+      continue;
+    end
+    
+    strncat(libs, " -l \"", LIBS_SIZE);
+    strncat(libs, arg, LIBS_SIZE);
+    strncat(libs, "\"", LIBS_SIZE);
+  end
+
+  println("(churmant/compiler) finished parsing libraries");
+end
+
+bool validating_source(string arg) do
   printf("(churmant/compiler) validating source file '%s'\n", arg);
   file source = null;
   file_open(source, arg);
@@ -110,6 +154,7 @@ func(validating_source(string arg))
   bool fatal = false;
   int string_at = -1;
   int string_end = -1;
+  int called_main = 0;
 
   while(true)
     strncpy(line, "", LINE_SIZE);
@@ -129,7 +174,21 @@ func(validating_source(string arg))
       fatal = true;
     end
 
-    long line_len = len(line);
+    long line_len = len(line); 
+
+    string temp = null;
+    allocate(temp, LINE_SIZE);
+    strncpy(temp, line, LINE_SIZE);
+    strncat(temp, "\n", LINE_SIZE);
+
+    if strncmp(line, temp, len(line) - 1) != success then
+      continue;
+    end
+
+    file_append("._chmp.c", temp);
+    char parts[PARTS_SIZE][PARTS_BUFFER_SIZE];
+    short parts_i = 0;
+    parsing_string = false;
 
     for(0, i < line_len, 1) do
       if line[i] == ';' and not parsing_string then
@@ -137,6 +196,15 @@ func(validating_source(string arg))
       end
 
       if line[i] == '\"' then
+        if i - 1 > 0 then
+          if line[i - 1] != '\\' then
+            parsing_string = not parsing_string;
+            continue;
+          end
+
+          continue;
+        end
+
         parsing_string = not parsing_string;
 
         if parsing_string then
@@ -176,16 +244,7 @@ func(validating_source(string arg))
 
     while(not (*line >= 'a' and *line <= 'z') and not (*line >= 'A' and *line <= 'Z') and *line != '_' and *line != '*' and *line != '\"' and *line != '\'')
       line++;
-    end 
-
-    string temp = null;
-    allocate(temp, LINE_SIZE);
-    strncpy(temp, line, LINE_SIZE);
-    strncat(temp, "\n", LINE_SIZE);
-    file_append("._chmp.c", temp);
-    char parts[PARTS_SIZE][PARTS_BUFFER_SIZE];
-    short parts_i = 0;
-    parsing_string = false;
+    end
 
     for(0, line[i] != '\0', 1) do
       if line[i] != ';' then
@@ -263,8 +322,12 @@ func(validating_source(string arg))
     end
 
     if strstr(line, "main") then
-      fprintf(stderr, "(churmant/compiler) line %lli, 'main' function cannot be called more than once\n", line_number);
-      fatal = true;
+      called_main++;
+      
+      if called_main > 1 then
+        fprintf(stderr, "(churmant/compiler) line %lli, 'main' function cannot be called more than once\n", line_number);
+        fatal = true;
+      end
     end
 
     if strstr(line, "char") then
@@ -276,10 +339,16 @@ func(validating_source(string arg))
       if strncmp(line, "int", len("int")) == success or
           strncmp(line, "long", len("long")) == success or 
           strncmp(line, "bool", len("bool")) == success or
-          strncmp(line, "byte", len("byte")) == success then
+          strncmp(line, "byte", len("byte")) == success or
+          strncmp(line, "string", len("string")) == success then
         fprintf(stderr, "(churmant/compiler) line %lli, pointer always need to be initialized as 'null'\n", line_number);
         fatal = true;
       end
+    end
+
+    if strstr(line, "string_array") and strstr(line, "=") and not strstr(line, "null") then
+      fprintf(stderr, "(churmant/compiler) line %lli, pointer always need to be initialized as 'null'\n", line_number);
+      fatal = true;
     end
 
     if strstr(line, "allocate") then
@@ -462,6 +531,16 @@ func(validating_source(string arg))
       fatal = true;
     end
 
+    if strstr(line, "longjmp") then
+      fprintf(stderr, "(churmant/compiler) line %lli, cannot use 'longjmp' function\n", line_number);
+      fatal = true;
+    end
+
+    if strstr(line, "setjmp") then
+      fprintf(stderr, "(churmant/compiler) line %lli, cannot use 'setjmp' function\n", line_number);
+      fatal = true;
+    end
+
     if strstr(line, "free") then
       fprintf(stderr, "(churmant/compiler) line %lli, cannot use 'free' function\n", line_number);
       fatal = true;
@@ -526,9 +605,9 @@ func(validating_source(string arg))
 
   printf("(churmant/compiler) finished validating source file '%s'\n", arg);
   return(true);
-fend(abort)
+end
 
-func(allowing_flags(string cmd))
+void allowing_flags(string cmd) do
   println("(churmant/compiler) allowing flags");
   if manual_allocation then
     strncat(cmd, " -Dchurmant_malloc ", CMD_SIZE);
@@ -536,10 +615,6 @@ func(allowing_flags(string cmd))
   
   if classic_types then
     strncat(cmd, " -Dchurmant_ctypes ", CMD_SIZE);
-  end
-  
-  if merge_libraries then
-    strncat(cmd, " -static ", CMD_SIZE);
   end
   
   if debugging then
@@ -558,25 +633,24 @@ func(allowing_flags(string cmd))
     strncat(cmd, " -ffunction-sections -fdata-sections ", CMD_SIZE);
   end
   println("(churmant/compiler) finished allowing flags");
-fend(abort)
+end
 
-func(resetting_flags())
+void resetting_flags() do
   println("(churmant/compiler) resetting flags");
   manual_allocation = false;
   classic_types = false;
-  merge_libraries = false;
   debugging = false;
   native_performance = false;
   reduce_binary_size = false;
   binary_readability = false;
   println("(churmant/compiler) finished resetting flags");
-fend(abort)
+end
 
-func(version())
+void version() do
   printf("Churmant Compiler [%s] version %.2lf\n", __FILE__, CHURMANT_VERSION);
-fend(abort)
+end
 
-func(help())
+void help() do
   println("Churmant Help\n");
   println("usage: chmc [options] files\n");
   println("options:");
@@ -585,14 +659,13 @@ func(help())
   println("flags ('churmant_flags.txt' file):");
   println("  manual_allocation");
   println("  classic_types");
-  println("  merge_libraries");
   println("  debugging");
   println("  native_performance");
   println("  reduce_binary_size");
   println("  binary_readability\n");
-fend(abort)
+end
 
-churmant_main
+int main(int argc, string *argv) do
   if argc == 1 then
     fprintf(stderr, "(churmant/compiler) no input files\n");
     exit(failure);
@@ -604,6 +677,9 @@ churmant_main
   allocate(cmd, CMD_SIZE);
   allocate(output, OUTPUT_SIZE);
   allocate(line, LINE_SIZE);
+  allocate(libs, LIBS_SIZE);
+  parsing_flags();
+  parsing_libs();
   
   for(1, i < argc, 1) do 
 
@@ -617,14 +693,9 @@ churmant_main
       continue;
     end
 
-    if file_find("churmant_flags.txt") and not finished_flags then
-      parsing_flags();
-      finished_flags = true;
-    end
-
     long j = i;
     long at = -1;
-    strncpy(cmd, "gcc -O3 -g3 --include=include/churmant.h -Werror=uninitialized -Werror=return-local-addr -std=c99 ._chmp.c", CMD_SIZE);
+    strncpy(cmd, "gcc -O3 -g3 --include=include/churmant.h -nodefaultlibs -Werror=uninitialized -Werror=return-local-addr -std=c99 ._chmp.c", CMD_SIZE);
     strncpy(output, argv[i], OUTPUT_SIZE);
     string arg = argv[j];
     
@@ -650,6 +721,7 @@ churmant_main
       continue;
     end
 
+
     output[at] = '\0';
     
     if not validating_source(arg) then
@@ -657,15 +729,21 @@ churmant_main
     end
 
     allowing_flags(cmd);
-
-    if cmd[CMD_SIZE - 1] != '\0' or output[OUTPUT_SIZE - 1] != '\0' then
+    
+    if len(cmd) + len(output) >= CMD_SIZE then
       fprintf(stderr, "(churmant/compiler) output file name is too big\n");
       continue;
+    end
+
+    if len(cmd) + len(libs) >= CMD_SIZE then
+      fprintf(stderr, "(churmant/compiler) too many libraries to link\n");
+      continue;
     end 
-    
+   
+    strncat(cmd, libs, CMD_SIZE);
     strncat(cmd, " -o ", CMD_SIZE);
     strncat(cmd, output, CMD_SIZE);
-    strncat(cmd, " -lpthread -lm 2>&1", CMD_SIZE);
+    strncat(cmd, " 2>&1", CMD_SIZE);
     printf("(churmant/compiler) compiling source file '%s'\n", arg);
     short ret = system(cmd);
     
@@ -683,4 +761,4 @@ churmant_main
     i = j;
     resetting_flags();
   end
-churmant_mend
+end

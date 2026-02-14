@@ -1,7 +1,6 @@
 # churmant_flags.txt
 # manual_allocation
 # classic_types
-merge_libraries
 debugging
 # native_performance
 reduce_binary_size

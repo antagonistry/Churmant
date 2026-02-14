@@ -1,10 +1,10 @@
 churmant_main
-  final int CMD_SIZE = sizeof(char) * 256;
+  final int CMD_SIZE = size(byte) * 256;
   struct timeval start_time, end_time;
   float elapsed = 0.0f;
   string cmd = null;
   allocate(cmd, CMD_SIZE);
-  strncpy(cmd, "", sizeof(cmd));
+  strncpy(cmd, "", CMD_SIZE);
   for(1, i < argc, 1) do
     strncat(cmd, argv[i], CMD_SIZE);
     if i + 1 < argc then
