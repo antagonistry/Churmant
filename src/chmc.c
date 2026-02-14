@@ -103,7 +103,7 @@ void parsing_libs() do
   allocate(arg, ARG_SIZE);
   strncpy(arg, "", ARG_SIZE);
 
-  strncpy(libs, "-L ~/.Churmant/libs", LIBS_SIZE);
+  strncpy(libs, "-L ~/.Churmant/lib", LIBS_SIZE);
   
   while(true)
     string line = file_readline(arg, ARG_SIZE, args);
