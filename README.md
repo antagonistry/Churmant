@@ -13,7 +13,7 @@ are not like **C** entirely, like `normal` *keyword* cannot be *stack* inside ea
 ## Why Churmant
 
 - **Lua-like Syntax:** Easy to read and write the code.
-- **Stack's "Second Life:** Second life to handle the undetected error.
+- **Stack's "Second Life":** Second life to handle the undetected error.
 - **Safe Heap Allocation:** No more confusion about `malloc`, `realloc` or `calloc`.
 - **Auto Garbage-Collection:** Automatically frees the heap-sided memories.
 - **Reusing Leftovers:** Reuse leftovers from the garbage without any problems.
