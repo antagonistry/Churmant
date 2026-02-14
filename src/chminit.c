@@ -23,6 +23,11 @@ void clone() do
     println("(churmant/installer) successfully cloned 'Churmant' repository to '~/.Churmant'");
   else
     println("(churmant/installer) unable to clone 'Churmant' repository to '~/.Churmant'");
+    
+    if churmant_os == CHURMANT_WINDOWS then
+      system("pause");
+    end
+
     exit(failure);
   end
 end
@@ -30,20 +35,34 @@ end
 void compile() do
   tiny ret = 0;
   println("(churmant/installer) compiling 'chmc' compiler");
+  
   if churmant_os == CHURMANT_WINDOWS then
-    ret = system("gcc -O3 -ffast-math -march=native -g -I %USERPROFILE%\\.Churmant\\include -Werror=uninitialized -o %USERPROFILE%\\.Churmant\\bin\\chmc %USERPROFILE%\\.Churmant\\src\\chmc.c\n");
+    ret = system("gcc -O3 -ffast-math -march=native -g --include=%USERPROFILE%\\.Churmant\\include\\churmant.h -Werror=uninitialized -o %USERPROFILE%\\.Churmant\\bin\\chmc %USERPROFILE%\\.Churmant\\src\\chmc.c\n");
   else
-    ret = system("gcc -O3 -ffast-math -march=native -g -I ~/.Churmant/include -Werror=uninitialized -o ~/.Churmant/bin/chmc ~/.Churmant/src/chmc.c\n");
+    ret = system("gcc -O3 -ffast-math -march=native -g --include=~/.Churmant/include/churmant.h -Werror=uninitialized -o ~/.Churmant/bin/chmc ~/.Churmant/src/chmc.c\n");
   end
+
   if ret == 0 then
     println("(churmant/installer) successfully compiled 'chmc' compiler");
   end
+  
   if ret == 1 then
     println("(churmant/installer) failed to compile 'chmc' compiler");
+    
+    if churmant_os == CHURMANT_WINDOWS then
+      system("pause");
+    end
+
     exit(failure);
   end
+  
   if ret == 127 then
     println("(churmant/installer) 'gcc' compiler is not installed");
+    
+    if churmant_os == CHURMANT_WINDOWS then
+      system("pause");
+    end
+
     exit(failure);
   end
 end
