@@ -2,6 +2,7 @@
 !*.*
 !*
 .*
+!.gitkeep
 *.exe
 *.out
 *.so
